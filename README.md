@@ -38,14 +38,22 @@ With this on, that penalty is multiplied (default 25×, adjustable from 5× to 1
 
 Side effect: the same penalty covers the game's other "rule-breaking" costs, so drivers also avoid illegal U-turns and banned roads more.
 
-### Traffic: "Clear traffic jams" button
-For when your highway entrances are completely jammed with thousands of cars that will never get in. One click (with an "are you sure?" popup) instantly removes every **moving** private car, taxi and delivery truck, including the queues at the city entrances and through-traffic.
+### Traffic: emergency buttons for jammed cities
+For when your highway entrances are completely jammed with thousands of cars that will never get in. Both buttons are on the Traffic tab, under "Emergency tools".
 
-- People riding in those cars are not deleted. They simply arrive where they were going (or at home if that's unknown), the same way the game handles a stuck citizen.
+**Remove stuck traffic** removes only the cars that are actually stuck:
+1. It notes where every moving car, taxi and delivery truck is.
+2. It lets the game run for a short while (40 in-game seconds by default, adjustable). If you had paused the game it unpauses it, and the check runs once you close the menu.
+3. It removes only the vehicles that moved less than 10 m in that time. Cars driving normally, or waiting a few seconds at a red light, are kept.
+
+Progress shows as a percentage in the game's notifications (the bell icon) and as a live status line on the options page. Nothing runs in the background when you're not using it.
+
+**Remove ALL moving traffic** is the emergency reset. After an "are you sure?" popup it instantly removes every moving private car, taxi and delivery truck, stuck or not, including the queues at the city entrances and through-traffic.
+
+For both buttons:
+- People riding in removed cars are not deleted. They simply arrive where they were going (or at home if that's unknown), the same way the game handles a stuck citizen.
 - Not touched: parked cars, buses, trams, trains, emergency and service vehicles, planes and ships.
 - Trucks lose the load they were carrying; the businesses just order again.
-
-It works while the game is paused too.
 
 ## Installing (local mod)
 
@@ -91,7 +99,7 @@ A successful build copies the mod straight into the game's local `Mods` folder.
 | `Audio/SoundVolumeSystem.cs` | Sorts every sound into a group and applies the sliders |
 | `Traffic/ParkingReservationSystem.cs` | Parking spot reservations |
 | `Traffic/BusLanePatch.cs` | Strict bus lanes (Harmony patch on route requests) |
-| `Traffic/ClearTrafficSystem.cs` | "Clear traffic jams" button |
+| `Traffic/ClearTrafficSystem.cs` | "Remove stuck traffic" and "Remove ALL moving traffic" buttons |
 | `lib/0Harmony.dll` | [Harmony](https://github.com/pardeike/Harmony) 2.2.2 (MIT license), used for the bus lane patch |
 
 Tested on game version 1.6.4f1. A big game update can break code mods. If something acts weird after an update, switch the affected option off.

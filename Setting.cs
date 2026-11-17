@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Colossal;
 using Colossal.IO.AssetDatabase;
+using Colossal.Json;
 using Game.Modding;
 using Game.Settings;
 using Game.UI;
@@ -89,11 +90,29 @@ namespace FedewsTweaks
 
         [SettingsUISection(kTrafficSection, kTrafficToolsGroup)]
         [SettingsUIButton]
-        [SettingsUIConfirmation]
-        public bool ClearTraffic
+        public bool RemoveStuckTraffic
         {
-            set { Traffic.ClearTrafficSystem.Request(); }
+            set { Traffic.ClearTrafficSystem.RequestStuck(); }
         }
+
+        [SettingsUISection(kTrafficSection, kTrafficToolsGroup)]
+        [SettingsUISlider(min = 10, max = 180, step = 5, unit = Unit.kInteger)]
+        public int StuckSeconds { get; set; }
+
+        [SettingsUISection(kTrafficSection, kTrafficToolsGroup)]
+        [SettingsUIButton]
+        [SettingsUIConfirmation]
+        public bool RemoveAllTraffic
+        {
+            set { Traffic.ClearTrafficSystem.RequestAll(); }
+        }
+
+        [Exclude]
+        [SettingsUISection(kTrafficSection, kTrafficToolsGroup)]
+        [SettingsUIValueVersion(typeof(Setting), nameof(TrafficToolStatusVersion))]
+        public string TrafficToolStatus => Traffic.ClearTrafficSystem.Status;
+
+        public int TrafficToolStatusVersion() => Traffic.ClearTrafficSystem.StatusVersion;
 
         public override void SetDefaults()
         {
@@ -110,6 +129,7 @@ namespace FedewsTweaks
             SmartParking = true;
             StrictBusLanes = true;
             BusLaneStrictness = 25;
+            StuckSeconds = 40;
         }
 
         public override void Apply()
@@ -166,9 +186,15 @@ namespace FedewsTweaks
                 { m.GetOptionDescLocaleID(nameof(Setting.BusLaneStrictness)), "How many times worse breaking traffic rules (bus lanes, banned roads, illegal turns) feels to drivers. Game default is 1. 25 is plenty for most cities; raise it if you still see cars sneaking in." },
 
                 { m.GetOptionGroupLocaleID(Setting.kTrafficToolsGroup), "Emergency tools" },
-                { m.GetOptionLabelLocaleID(nameof(Setting.ClearTraffic)), "Clear traffic jams" },
-                { m.GetOptionDescLocaleID(nameof(Setting.ClearTraffic)), "Instantly removes every moving private car, taxi and delivery truck in the city, including the queues at highway entrances and through-traffic. Anyone riding in them simply arrives where they were going. Parked cars, buses, trams, trains, emergency and service vehicles are not touched. Load a city first." },
-                { m.GetOptionWarningLocaleID(nameof(Setting.ClearTraffic)), "Remove all moving private cars, taxis and delivery trucks? Parked cars and public/emergency vehicles stay." },
+                { m.GetOptionLabelLocaleID(nameof(Setting.RemoveStuckTraffic)), "Remove stuck traffic" },
+                { m.GetOptionDescLocaleID(nameof(Setting.RemoveStuckTraffic)), "Watches the traffic for a short while (see the time below) and then removes only the cars, taxis and delivery trucks that barely moved. Cars driving normally are kept. Unpauses the game if you paused it; the check runs once you close this menu. Progress shows here and in the notifications (bell icon). People riding in removed cars simply arrive where they were going. Parked cars, buses, trams, trains, emergency and service vehicles are never touched." },
+                { m.GetOptionLabelLocaleID(nameof(Setting.StuckSeconds)), "Counts as stuck after (in-game seconds)" },
+                { m.GetOptionDescLocaleID(nameof(Setting.StuckSeconds)), "How long a car has to sit still (moving less than 10 m) to count as stuck. Long enough that cars waiting at a red light are not removed. 40 is a good start." },
+                { m.GetOptionLabelLocaleID(nameof(Setting.RemoveAllTraffic)), "Remove ALL moving traffic" },
+                { m.GetOptionDescLocaleID(nameof(Setting.RemoveAllTraffic)), "Emergency reset: instantly removes every moving private car, taxi and delivery truck, stuck or not, including the queues at highway entrances and through-traffic. People riding in them simply arrive where they were going. Parked cars, buses, trams, trains, emergency and service vehicles are not touched." },
+                { m.GetOptionWarningLocaleID(nameof(Setting.RemoveAllTraffic)), "Remove ALL moving private cars, taxis and delivery trucks, even ones driving normally? Parked cars and public/emergency vehicles stay." },
+                { m.GetOptionLabelLocaleID(nameof(Setting.TrafficToolStatus)), "Status" },
+                { m.GetOptionDescLocaleID(nameof(Setting.TrafficToolStatus)), "What the traffic tools are doing right now, or the result of the last run." },
             };
         }
 
