@@ -179,7 +179,7 @@ namespace FedewsTweaks
                 { m.GetOptionDescLocaleID(nameof(Setting.DumpSoundList)), "Writes every sound in the game and the group it was put in to Logs/FedewsTweaks.Mod.log. Load a city first." },
 
                 { m.GetOptionLabelLocaleID(nameof(Setting.SmartParking)), "Parking spot reservations" },
-                { m.GetOptionDescLocaleID(nameof(Setting.SmartParking)), "Once a car is heading to a parking spot, that spot counts as taken for every other car. When a spot frees up, only one car goes for it and the rest of the city carries on, instead of everybody rushing there and re-routing. Cars are never removed or sent home by this." },
+                { m.GetOptionDescLocaleID(nameof(Setting.SmartParking)), "Once a car is heading to a parking spot, that spot counts as taken for every other car. When a spot frees up, only one car goes for it and the rest of the city carries on, instead of everybody rushing there and re-routing. Works for street parking, parking lots and parking garages. Cars are never removed or sent home by this." },
                 { m.GetOptionLabelLocaleID(nameof(Setting.StrictBusLanes)), "Strict bus lanes" },
                 { m.GetOptionDescLocaleID(nameof(Setting.StrictBusLanes)), "Private cars and trucks stop using bus lanes as a shortcut. They only enter one when there is no other way (for example a turn that only the bus lane connects to). Buses, taxis and emergency vehicles are not affected. Applies to new routes, so give it a minute." },
                 { m.GetOptionLabelLocaleID(nameof(Setting.BusLaneStrictness)), "Bus lane strictness" },

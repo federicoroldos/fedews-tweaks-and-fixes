@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Parking spot reservations** now cover parking garages and parking buildings too. Once enough cars are on their way to fill a garage, new routes pick somewhere else, while the cars already heading there still drive in.
+
+### Fixed
+- A car pulling out of a parking spot no longer counts as reserving the spot it is leaving.
+
 ## [1.0.0] - 2026-11-17
 
 ### Added

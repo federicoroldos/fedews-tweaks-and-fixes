@@ -40,6 +40,8 @@ namespace FedewsTweaks
             //    free parking space and right before that information is handed to the route planner)
             updateSystem.UpdateAfter<ParkingReservationSystem, PersonalCarAISystem>(SystemUpdatePhase.GameSimulation);
             updateSystem.UpdateBefore<ParkingReservationApplySystem, LanesModifiedSystem>(SystemUpdatePhase.ModificationEnd);
+            //  - garages: drivers check the same number on arrival, so the real count is put back right after
+            updateSystem.UpdateAfter<ParkingReservationRestoreSystem, LanesModifiedSystem>(SystemUpdatePhase.ModificationEnd);
 
             // Traffic emergency buttons (main loop, so they also react while the game is paused)
             updateSystem.UpdateAt<ClearTrafficSystem>(SystemUpdatePhase.MainLoop);

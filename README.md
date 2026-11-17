@@ -23,7 +23,7 @@ Ten sliders: helicopters, space rocket, airplanes, road traffic, sirens & horns,
 - **Write sound list to log** shows which group every sound is in.
 
 ### 🅿️ Parking spot reservations
-In the base game, when a spot frees up, every nearby car heads for it, and the losers U-turn and re-route over and over. With this on, a spot that a car is already heading to counts as **taken** for every other route. Cars are never removed or teleported.
+In the base game, when a spot frees up, every nearby car heads for it, and the losers U-turn and re-route over and over. With this on, a spot that a car is already heading to counts as **taken** for every other route, whether it's on the street, in a parking lot or in a parking garage. Cars are never removed or teleported.
 
 ### 🚌 Strict bus lanes
 In the base game, bus lanes only carry a small penalty, so cars dive in to skip queues. This multiplies that penalty (**25×** by default, 5–100×) for every vehicle not allowed in bus lanes. It's not a hard ban, because some turns and driveways can only be reached through a bus lane. Buses, taxis and emergency vehicles are unaffected.

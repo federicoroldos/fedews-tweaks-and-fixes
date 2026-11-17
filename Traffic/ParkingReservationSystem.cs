@@ -32,8 +32,13 @@ namespace FedewsTweaks.Traffic
     {
         public const int kInterval = 8;
 
-        // Lanes we are currently showing as full, with the real free-space value the game computed for them.
+        // Lanes we are currently showing as full, with the real value the game computed for them
+        // (free space for street/lot parking, number of cars inside for garages).
         internal readonly Dictionary<Entity, float> m_Blocked = new Dictionary<Entity, float>();
+
+        // Garages shown as full for this frame's route update only, with their real car count.
+        // Drivers check the same number when they arrive, so it is put back right after the route planner read it.
+        internal readonly List<KeyValuePair<Entity, ushort>> m_GarageRestore = new List<KeyValuePair<Entity, ushort>>();
 
         private EndFrameBarrier m_EndFrameBarrier;
         private EntityQuery m_CarQuery;
@@ -160,6 +165,8 @@ namespace FedewsTweaks.Traffic
                 m_NavigationLaneType = GetBufferTypeHandle<CarNavigationLane>(true),
                 m_PathElementType = GetBufferTypeHandle<PathElement>(true),
                 m_ParkingLaneData = GetComponentLookup<Game.Net.ParkingLane>(true),
+                m_GarageLaneData = GetComponentLookup<GarageLane>(true),
+                m_ConnectionLaneData = GetComponentLookup<Game.Net.ConnectionLane>(true),
                 m_Output = m_Reservations.AsParallelWriter(),
             };
             JobHandle scanHandle = JobChunkExtensions.ScheduleParallel(scan, m_CarQuery, Dependency);
@@ -170,6 +177,8 @@ namespace FedewsTweaks.Traffic
                 m_Counts = m_Counts,
                 m_Blocked = m_BlockedNative,
                 m_ParkingLaneData = GetComponentLookup<Game.Net.ParkingLane>(true),
+                m_GarageLaneData = GetComponentLookup<GarageLane>(true),
+                m_ConnectionLaneData = GetComponentLookup<Game.Net.ConnectionLane>(true),
                 m_CurveData = GetComponentLookup<Curve>(true),
                 m_PrefabRefData = GetComponentLookup<PrefabRef>(true),
                 m_PrefabParkingLaneData = GetComponentLookup<ParkingLaneData>(true),
@@ -235,6 +244,8 @@ namespace FedewsTweaks.Traffic
             [ReadOnly] public BufferTypeHandle<CarNavigationLane> m_NavigationLaneType;
             [ReadOnly] public BufferTypeHandle<PathElement> m_PathElementType;
             [ReadOnly] public ComponentLookup<Game.Net.ParkingLane> m_ParkingLaneData;
+            [ReadOnly] public ComponentLookup<GarageLane> m_GarageLaneData;
+            [ReadOnly] public ComponentLookup<Game.Net.ConnectionLane> m_ConnectionLaneData;
             public NativeQueue<Entity>.ParallelWriter m_Output;
 
             public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
@@ -246,11 +257,14 @@ namespace FedewsTweaks.Traffic
 
                 for (int i = 0; i < chunk.Count; i++)
                 {
+                    DynamicBuffer<CarNavigationLane> nav = navigationLanes[i];
+
+                    // Already on the parking lane and nothing after it: this car is parking there right now.
+                    // (A car that is pulling OUT of a spot has the road ahead of it, so it doesn't count here.)
                     Entity current = currentLanes[i].m_Lane;
-                    if (IsParking(current)) { m_Output.Enqueue(current); continue; }
+                    if (nav.Length == 0 && IsParking(current)) { m_Output.Enqueue(current); continue; }
 
                     bool found = false;
-                    DynamicBuffer<CarNavigationLane> nav = navigationLanes[i];
                     for (int j = 0; j < nav.Length; j++)
                     {
                         if (IsParking(nav[j].m_Lane)) { m_Output.Enqueue(nav[j].m_Lane); found = true; break; }
@@ -271,10 +285,20 @@ namespace FedewsTweaks.Traffic
 
             private bool IsParking(Entity lane)
             {
-                return lane != Entity.Null
-                    && m_ParkingLaneData.TryGetComponent(lane, out Game.Net.ParkingLane p)
-                    && (p.m_Flags & ParkingLaneFlags.VirtualLane) == 0;
+                if (lane == Entity.Null) return false;
+                if (m_ParkingLaneData.TryGetComponent(lane, out Game.Net.ParkingLane p))
+                    return (p.m_Flags & ParkingLaneFlags.VirtualLane) == 0;
+                return IsGarage(lane, ref m_GarageLaneData, ref m_ConnectionLaneData);
             }
+        }
+
+        /// <summary>A parking garage / parking building entrance inside the city (not an outside connection).</summary>
+        internal static bool IsGarage(Entity lane, ref ComponentLookup<GarageLane> garages, ref ComponentLookup<Game.Net.ConnectionLane> connections)
+        {
+            return garages.HasComponent(lane)
+                && connections.TryGetComponent(lane, out Game.Net.ConnectionLane c)
+                && (c.m_Flags & ConnectionLaneFlags.Parking) != 0
+                && (c.m_Flags & ConnectionLaneFlags.Outside) == 0;
         }
 
         /// <summary>Counts reservations per parking lane and decides which lanes to show as full.</summary>
@@ -284,6 +308,8 @@ namespace FedewsTweaks.Traffic
             public NativeParallelHashMap<Entity, int> m_Counts;
             [ReadOnly] public NativeParallelHashMap<Entity, float> m_Blocked;
             [ReadOnly] public ComponentLookup<Game.Net.ParkingLane> m_ParkingLaneData;
+            [ReadOnly] public ComponentLookup<GarageLane> m_GarageLaneData;
+            [ReadOnly] public ComponentLookup<Game.Net.ConnectionLane> m_ConnectionLaneData;
             [ReadOnly] public ComponentLookup<Curve> m_CurveData;
             [ReadOnly] public ComponentLookup<PrefabRef> m_PrefabRefData;
             [ReadOnly] public ComponentLookup<ParkingLaneData> m_PrefabParkingLaneData;
@@ -314,20 +340,33 @@ namespace FedewsTweaks.Traffic
                     {
                         Entity lane = pairs.Keys[i];
                         int reserved = pairs.Values[i];
-                        if (m_DeletedData.HasComponent(lane) || !m_ParkingLaneData.TryGetComponent(lane, out Game.Net.ParkingLane parking))
-                            continue;
+                        if (m_DeletedData.HasComponent(lane)) continue;
 
-                        bool isBlocked = m_Blocked.TryGetValue(lane, out float realFree);
-                        if (!isBlocked) realFree = parking.m_FreeSpace;
+                        bool isBlocked = m_Blocked.TryGetValue(lane, out float realValue);
+                        int free;
+                        if (m_ParkingLaneData.TryGetComponent(lane, out Game.Net.ParkingLane parking))
+                        {
+                            // Street / parking lot: m_FreeSpace stays at 0 while blocked, so use the remembered real value
+                            if (!isBlocked) realValue = parking.m_FreeSpace;
+                            free = FreeSpots(lane, parking, realValue);
+                        }
+                        else if (IsGarage(lane, ref m_GarageLaneData, ref m_ConnectionLaneData))
+                        {
+                            // Garage: the "full" value only lasts for an instant, so the stored count is always the real one
+                            if ((m_ConnectionLaneData[lane].m_Flags & ConnectionLaneFlags.Disabled) != 0) continue;
+                            GarageLane garage = m_GarageLaneData[lane];
+                            realValue = garage.m_VehicleCount;
+                            free = garage.m_VehicleCapacity - garage.m_VehicleCount;
+                        }
+                        else continue;
 
-                        int free = FreeSpots(lane, parking, realFree);
                         if (free > 0 && reserved >= free)
                         {
                             keep.Add(lane);
                             if (!isBlocked)
                             {
                                 m_ToBlock.Add(lane);
-                                m_ToBlockFree.Add(realFree);
+                                m_ToBlockFree.Add(realValue);
                             }
                         }
                     }
@@ -410,12 +449,57 @@ namespace FedewsTweaks.Traffic
 
             foreach (Entity lane in m_Touched)
             {
-                if (!EntityManager.HasComponent<Game.Net.ParkingLane>(lane)) { blocked.Remove(lane); continue; }
-                Game.Net.ParkingLane parking = EntityManager.GetComponentData<Game.Net.ParkingLane>(lane);
-                blocked[lane] = parking.m_FreeSpace;   // fresh real value from the game
-                parking.m_FreeSpace = 0f;              // what the route planner will see
-                EntityManager.SetComponentData(lane, parking);
+                if (EntityManager.HasComponent<Game.Net.ParkingLane>(lane))
+                {
+                    // Street / parking lot. Drivers look at the actual cars on the lane, not at this number,
+                    // so it can stay at 0 until the lane is refreshed again.
+                    Game.Net.ParkingLane parking = EntityManager.GetComponentData<Game.Net.ParkingLane>(lane);
+                    blocked[lane] = parking.m_FreeSpace;   // fresh real value from the game
+                    parking.m_FreeSpace = 0f;              // what the route planner will see
+                    EntityManager.SetComponentData(lane, parking);
+                }
+                else if (EntityManager.HasComponent<GarageLane>(lane))
+                {
+                    // Garage. Drivers on their way DO check this number, so it is only shown as full while the
+                    // route planner reads it; ParkingReservationRestoreSystem puts the real number back right after.
+                    GarageLane garage = EntityManager.GetComponentData<GarageLane>(lane);
+                    blocked[lane] = garage.m_VehicleCount;
+                    m_Reservations.m_GarageRestore.Add(new KeyValuePair<Entity, ushort>(lane, garage.m_VehicleCount));
+                    garage.m_VehicleCount = garage.m_VehicleCapacity;
+                    EntityManager.SetComponentData(lane, garage);
+                }
+                else blocked.Remove(lane);
             }
+        }
+    }
+
+    /// <summary>
+    /// Runs right after the route planner has read the lanes: gives garages their real car count back, so cars
+    /// that already reserved a spot there see it as free when they arrive and drive in normally.
+    /// </summary>
+    public partial class ParkingReservationRestoreSystem : GameSystemBase
+    {
+        private ParkingReservationSystem m_Reservations;
+
+        protected override void OnCreate()
+        {
+            base.OnCreate();
+            m_Reservations = World.GetOrCreateSystemManaged<ParkingReservationSystem>();
+        }
+
+        protected override void OnUpdate()
+        {
+            List<KeyValuePair<Entity, ushort>> restore = m_Reservations.m_GarageRestore;
+            if (restore.Count == 0) return;
+
+            foreach (KeyValuePair<Entity, ushort> item in restore)
+            {
+                if (!EntityManager.Exists(item.Key) || !EntityManager.HasComponent<GarageLane>(item.Key)) continue;
+                GarageLane garage = EntityManager.GetComponentData<GarageLane>(item.Key);
+                garage.m_VehicleCount = item.Value;
+                EntityManager.SetComponentData(item.Key, garage);
+            }
+            restore.Clear();
         }
     }
 }
