@@ -1,0 +1,55 @@
+name: 🐞 Bug report
+description: Something in the mod isn't working as described.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report this! The log file makes problems much easier to find:
+        `%USERPROFILE%\AppData\LocalLow\Colossal Order\Cities Skylines II\Logs\FedewsTweaks.Mod.log`
+  - type: dropdown
+    id: feature
+    attributes:
+      label: Which feature?
+      options:
+        - Volume sliders
+        - Parking spot reservations
+        - Strict bus lanes
+        - Remove stuck traffic
+        - Remove ALL moving traffic
+        - Options page / something else
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: How can it be reproduced?
+      placeholder: |
+        1. Load a city with ...
+        2. Press ...
+        3. See ...
+  - type: input
+    id: game-version
+    attributes:
+      label: Game version
+      placeholder: e.g. 1.6.4f1
+    validations:
+      required: true
+  - type: textarea
+    id: other-mods
+    attributes:
+      label: Other code mods you use
+      description: Especially traffic, parking or sound mods.
+  - type: textarea
+    id: log
+    attributes:
+      label: Log file
+      description: Paste the contents of FedewsTweaks.Mod.log, or drag the file in here.
+      render: text

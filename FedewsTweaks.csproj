@@ -19,6 +19,10 @@
     <NoWarn>$(NoWarn);CS0649;CS0169;CS0414;CS1701;CS1702;MSB3270;MSB3277</NoWarn>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+    <!-- Keep local folder paths out of the compiled DLL -->
+    <Deterministic>true</Deterministic>
+    <PathMap>$(MSBuildProjectDirectory)=/_/</PathMap>
+    <DebugType Condition="'$(Configuration)' == 'Release'">none</DebugType>
 
     <GameDir Condition="'$(GameDir)' == ''">C:\Program Files (x86)\Steam\steamapps\common\Cities Skylines II</GameDir>
     <ManagedDir>$(GameDir)\Cities2_Data\Managed</ManagedDir>
