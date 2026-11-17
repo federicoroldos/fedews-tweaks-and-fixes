@@ -38,6 +38,15 @@ With this on, that penalty is multiplied (default 25×, adjustable from 5× to 1
 
 Side effect: the same penalty covers the game's other "rule-breaking" costs, so drivers also avoid illegal U-turns and banned roads more.
 
+### Traffic: "Clear traffic jams" button
+For when your highway entrances are completely jammed with thousands of cars that will never get in. One click (with an "are you sure?" popup) instantly removes every **moving** private car, taxi and delivery truck, including the queues at the city entrances and through-traffic.
+
+- People riding in those cars are not deleted. They simply arrive where they were going (or at home if that's unknown), the same way the game handles a stuck citizen.
+- Not touched: parked cars, buses, trams, trains, emergency and service vehicles, planes and ships.
+- Trucks lose the load they were carrying; the businesses just order again.
+
+It works while the game is paused too.
+
 ## Installing (local mod)
 
 1. Build it (see below), or copy `FedewsTweaks.dll` and `0Harmony.dll` into
@@ -82,6 +91,7 @@ A successful build copies the mod straight into the game's local `Mods` folder.
 | `Audio/SoundVolumeSystem.cs` | Sorts every sound into a group and applies the sliders |
 | `Traffic/ParkingReservationSystem.cs` | Parking spot reservations |
 | `Traffic/BusLanePatch.cs` | Strict bus lanes (Harmony patch on route requests) |
+| `Traffic/ClearTrafficSystem.cs` | "Clear traffic jams" button |
 | `lib/0Harmony.dll` | [Harmony](https://github.com/pardeike/Harmony) 2.2.2 (MIT license), used for the bus lane patch |
 
 Tested on game version 1.6.4f1. A big game update can break code mods. If something acts weird after an update, switch the affected option off.

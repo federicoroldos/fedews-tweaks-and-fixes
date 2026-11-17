@@ -41,6 +41,9 @@ namespace FedewsTweaks
             updateSystem.UpdateAfter<ParkingReservationSystem, PersonalCarAISystem>(SystemUpdatePhase.GameSimulation);
             updateSystem.UpdateBefore<ParkingReservationApplySystem, LanesModifiedSystem>(SystemUpdatePhase.ModificationEnd);
 
+            // "Clear traffic jams" button (main loop, so it also works while the game is paused)
+            updateSystem.UpdateAt<ClearTrafficSystem>(SystemUpdatePhase.MainLoop);
+
             // Bus lanes: adjust each car's route request before the route planner sees it
             m_Harmony = new Harmony(Id);
             m_Harmony.PatchAll(typeof(Mod).Assembly);

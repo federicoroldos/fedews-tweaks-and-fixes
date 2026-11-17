@@ -9,8 +9,8 @@ using Game.UI;
 namespace FedewsTweaks
 {
     [FileLocation(Mod.Id)]
-    [SettingsUIGroupOrder(kSoundGroup, kSoundToolsGroup, kTrafficGroup)]
-    [SettingsUIShowGroupName(kSoundGroup, kSoundToolsGroup, kTrafficGroup)]
+    [SettingsUIGroupOrder(kSoundGroup, kSoundToolsGroup, kTrafficGroup, kTrafficToolsGroup)]
+    [SettingsUIShowGroupName(kSoundGroup, kSoundToolsGroup, kTrafficGroup, kTrafficToolsGroup)]
     public class Setting : ModSetting
     {
         public const string kSoundSection = "Sounds";
@@ -18,6 +18,7 @@ namespace FedewsTweaks
         public const string kSoundGroup = "SoundVolumes";
         public const string kSoundToolsGroup = "SoundTools";
         public const string kTrafficGroup = "TrafficFixes";
+        public const string kTrafficToolsGroup = "TrafficTools";
 
         /// <summary>Raised whenever any option changes.</summary>
         public static event Action Changed;
@@ -85,6 +86,14 @@ namespace FedewsTweaks
         public int BusLaneStrictness { get; set; }
 
         public bool BusLanesOff() => !StrictBusLanes;
+
+        [SettingsUISection(kTrafficSection, kTrafficToolsGroup)]
+        [SettingsUIButton]
+        [SettingsUIConfirmation]
+        public bool ClearTraffic
+        {
+            set { Traffic.ClearTrafficSystem.Request(); }
+        }
 
         public override void SetDefaults()
         {
@@ -155,6 +164,11 @@ namespace FedewsTweaks
                 { m.GetOptionDescLocaleID(nameof(Setting.StrictBusLanes)), "Private cars and trucks stop using bus lanes as a shortcut. They only enter one when there is no other way (for example a turn that only the bus lane connects to). Buses, taxis and emergency vehicles are not affected. Applies to new routes, so give it a minute." },
                 { m.GetOptionLabelLocaleID(nameof(Setting.BusLaneStrictness)), "Bus lane strictness" },
                 { m.GetOptionDescLocaleID(nameof(Setting.BusLaneStrictness)), "How many times worse breaking traffic rules (bus lanes, banned roads, illegal turns) feels to drivers. Game default is 1. 25 is plenty for most cities; raise it if you still see cars sneaking in." },
+
+                { m.GetOptionGroupLocaleID(Setting.kTrafficToolsGroup), "Emergency tools" },
+                { m.GetOptionLabelLocaleID(nameof(Setting.ClearTraffic)), "Clear traffic jams" },
+                { m.GetOptionDescLocaleID(nameof(Setting.ClearTraffic)), "Instantly removes every moving private car, taxi and delivery truck in the city, including the queues at highway entrances and through-traffic. Anyone riding in them simply arrives where they were going. Parked cars, buses, trams, trains, emergency and service vehicles are not touched. Load a city first." },
+                { m.GetOptionWarningLocaleID(nameof(Setting.ClearTraffic)), "Remove all moving private cars, taxis and delivery trucks? Parked cars and public/emergency vehicles stay." },
             };
         }
 
