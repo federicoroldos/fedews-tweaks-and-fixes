@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.0.0] - 2026-11-17
 
 ### Added
-- **Volume per sound type:** ten sliders (helicopters, space rocket, airplanes, road traffic, sirens & horns, trains, ships, buildings, people & animals, everything else). Helicopters start muted.
+- **Volume per sound type:** ten sliders (helicopters, space rocket, airplanes, road traffic, sirens & horns, trains, ships, buildings, people & animals, everything else). All start at 100%, the game's normal volume.
 - **Write sound list to log** button for checking which group each sound is in.
 - **Parking spot reservations:** a parking spot that a car is already heading to counts as taken for every other car's route.
 - **Strict bus lanes:** private vehicles avoid bus lanes unless there's no other way. Adjustable strictness from 5× to 100×.

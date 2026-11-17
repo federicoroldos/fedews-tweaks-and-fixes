@@ -29,7 +29,7 @@ Every feature is optional and can be adjusted in-game.
 
 ### 🔇 Volume per sound type
 Ten sliders, one for each kind of sound: helicopters, the space rocket, planes, road traffic, sirens, trains, ships, buildings, people & animals, and everything else.
-**Helicopters start muted.**
+**Everything starts at 100%, so nothing changes until you move a slider.**
 
 </td>
 <td width="50%" valign="top">
@@ -61,7 +61,7 @@ Private cars stop hopping into bus lanes to skip a queue and then blocking every
 
 | Slider | What it covers | Default |
 | :-- | :-- | :-: |
-| 🚁 **Helicopters** | Police, medical, fire and passenger helicopters | **0%** |
+| 🚁 **Helicopters** | Police, medical, fire and passenger helicopters | 100% |
 | 🚀 **Space rocket** | The space center launch | 100% |
 | ✈️ **Airplanes** | Passenger, cargo and firefighting planes | 100% |
 | 🚗 **Cars, buses & trucks** | Every road vehicle (including bikes) plus the city's background traffic hum | 100% |
@@ -148,7 +148,7 @@ All options live in **Options → Fedews' Tweaks and Fixes**.
 
 | Tab | Option | Default |
 | :-- | :-- | :-: |
-| Sounds | 10 volume sliders | 100% (helicopters 0%) |
+| Sounds | 10 volume sliders | 100% (game default) |
 | Sounds | Write sound list to log | button |
 | Traffic | Parking spot reservations | ✅ On |
 | Traffic | Strict bus lanes | ✅ On |

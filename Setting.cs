@@ -116,7 +116,7 @@ namespace FedewsTweaks
 
         public override void SetDefaults()
         {
-            HelicopterVolume = 0;
+            HelicopterVolume = 100;
             RocketVolume = 100;
             PlaneVolume = 100;
             CarVolume = 100;
