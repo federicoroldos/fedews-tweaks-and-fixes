@@ -48,7 +48,9 @@ For when your highway entrances are completely jammed with thousands of cars tha
 
 Progress shows as a percentage in the game's notifications (the bell icon) and as a live status line on the options page. Nothing runs in the background when you're not using it.
 
-**Remove ALL moving traffic** is the emergency reset. After an "are you sure?" popup it instantly removes every moving private car, taxi and delivery truck, stuck or not, including the queues at the city entrances and through-traffic.
+**Remove ALL moving traffic** is the emergency reset. After an "are you sure?" popup it instantly removes every private car, taxi and delivery truck that is **driving**, stuck or not, including the queues at the city entrances and through-traffic.
+
+**Parked cars are never removed by either button.** Cars in parking spots, lots, garages and driveways all stay where they are.
 
 For both buttons:
 - People riding in removed cars are not deleted. They simply arrive where they were going (or at home if that's unknown), the same way the game handles a stuck citizen.

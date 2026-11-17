@@ -178,7 +178,7 @@ namespace FedewsTweaks.Traffic
 
             string result = vehicles == 0
                 ? "Done: no stuck vehicles found."
-                : $"Done: removed {vehicles} stuck vehicles. {people} passengers were sent straight to where they were going.";
+                : $"Done: removed {vehicles} stuck vehicles. Parked cars were not touched. {people} passengers were sent straight to where they were going.";
             Mod.log.Info("Remove stuck traffic: " + result);
             SetStatus(result);
             NotificationSystem.Pop(kNotificationId, 6f,
@@ -261,7 +261,7 @@ namespace FedewsTweaks.Traffic
                 done.Dispose();
             }
 
-            string result = $"Removed all {vehicles} moving cars, taxis and trucks. {people} passengers were sent straight to where they were going.";
+            string result = $"Removed all {vehicles} driving cars, taxis and trucks. Parked cars were not touched. {people} passengers were sent straight to where they were going.";
             Mod.log.Info("Remove all moving traffic: " + result);
             SetStatus(result);
             NotificationSystem.Pop(kNotificationId + ".All", 6f,
