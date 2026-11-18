@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - **Parking spot reservations** now cover parking garages and parking buildings too. Once enough cars are on their way to fill a garage, new routes pick somewhere else, while the cars already heading there still drive in.
 
+### Changed
+- Parking reservations are cheaper to run: each car's route is now searched from the end, where the parking spot is, instead of from the start.
+- The log now shows how much CPU time the parking reservations use, about once per in-game minute.
+
 ### Fixed
 - A car pulling out of a parking spot no longer counts as reserving the spot it is leaving.
 

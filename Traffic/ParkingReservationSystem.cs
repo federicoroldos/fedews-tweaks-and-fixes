@@ -31,6 +31,13 @@ namespace FedewsTweaks.Traffic
     public partial class ParkingReservationSystem : GameSystemBase
     {
         public const int kInterval = 8;
+        private const int kTailScan = 256;          // route steps checked from the end when looking for the parking spot
+        private const int kChecksPerReport = 450;   // 450 checks x 8 frames = about one in-game minute at 1x speed
+
+        // Cost measurement, written to the log about once per in-game minute
+        private static long s_CpuTicks;
+        private static long s_CarsScanned;
+        private int m_Checks;
 
         // Lanes we are currently showing as full, with the real value the game computed for them
         // (free space for street/lot parking, number of cars inside for garages).
@@ -135,6 +142,7 @@ namespace FedewsTweaks.Traffic
                 m_Handle.Complete();
                 m_Scheduled = false;
                 ApplyResults();
+                ReportCost();
             }
 
             bool enabled = Mod.Settings != null && Mod.Settings.SmartParking;
@@ -223,6 +231,18 @@ namespace FedewsTweaks.Traffic
             }
         }
 
+        /// <summary>Writes the average CPU time per check to the log, so the cost can be seen on a real city.</summary>
+        private void ReportCost()
+        {
+            if (++m_Checks < kChecksPerReport) return;
+            double ms = s_CpuTicks * 1000.0 / System.Diagnostics.Stopwatch.Frequency / m_Checks;
+            long cars = s_CarsScanned / m_Checks;
+            Mod.log.Info($"Parking reservations cost: {ms:0.00} ms of CPU per check (spread over worker threads), {cars} moving cars checked each time, one check every {kInterval} frames");
+            m_Checks = 0;
+            s_CpuTicks = 0;
+            s_CarsScanned = 0;
+        }
+
         private void UnblockAll()
         {
             m_Handle.Complete();
@@ -250,6 +270,7 @@ namespace FedewsTweaks.Traffic
 
             public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
             {
+                long startTicks = System.Diagnostics.Stopwatch.GetTimestamp();
                 NativeArray<CarCurrentLane> currentLanes = chunk.GetNativeArray(ref m_CurrentLaneType);
                 NativeArray<PathOwner> pathOwners = chunk.GetNativeArray(ref m_PathOwnerType);
                 BufferAccessor<CarNavigationLane> navigationLanes = chunk.GetBufferAccessor(ref m_NavigationLaneType);
@@ -273,14 +294,22 @@ namespace FedewsTweaks.Traffic
 
                     PathOwner owner = pathOwners[i];
                     if ((owner.m_State & PathFlags.Failed) != 0) continue;
+
+                    // The parking spot is where the driving part of the trip ends, so look from the END of the
+                    // route backwards: it is found within a few steps instead of walking the whole route.
+                    // Routes that don't end in parking (e.g. leaving the city) give up after kTailScan steps.
                     DynamicBuffer<PathElement> path = paths[i];
-                    int end = math.min(path.Length, owner.m_ElementIndex + 4000);
-                    for (int k = math.max(0, owner.m_ElementIndex); k < end; k++)
+                    int first = math.max(0, owner.m_ElementIndex);
+                    int stop = math.max(first, path.Length - kTailScan);
+                    for (int k = path.Length - 1; k >= stop; k--)
                     {
                         Entity target = path[k].m_Target;
                         if (IsParking(target)) { m_Output.Enqueue(target); break; }
                     }
                 }
+
+                System.Threading.Interlocked.Add(ref s_CpuTicks, System.Diagnostics.Stopwatch.GetTimestamp() - startTicks);
+                System.Threading.Interlocked.Add(ref s_CarsScanned, chunk.Count);
             }
 
             private bool IsParking(Entity lane)
@@ -323,6 +352,7 @@ namespace FedewsTweaks.Traffic
 
             public void Execute()
             {
+                long startTicks = System.Diagnostics.Stopwatch.GetTimestamp();
                 m_Counts.Clear();
                 int needed = m_Reservations.Count;
                 if (m_Counts.Capacity < needed) m_Counts.Capacity = needed;
@@ -380,6 +410,7 @@ namespace FedewsTweaks.Traffic
                     }
                 }
                 keep.Dispose();
+                System.Threading.Interlocked.Add(ref s_CpuTicks, System.Diagnostics.Stopwatch.GetTimestamp() - startTicks);
             }
 
             /// <summary>How many cars could still physically park on this lane right now.</summary>
