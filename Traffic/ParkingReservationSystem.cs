@@ -23,9 +23,9 @@ namespace FedewsTweaks.Traffic
     /// every car nearby that plans (or re-plans) a route picks it, they all race there, one wins, and the
     /// rest re-plan again - which is the gridlock / U-turn / route-flipping mess.
     ///
-    /// This system looks at every moving car, works out which parking lane it is heading to, and counts
-    /// those "reservations". When a parking lane has as many cars heading to it as it has free spots, it is
-    /// shown as full to the route planner, so new routes go somewhere else. Cars that already reserved it are
+    /// This system looks at every moving car, works out which parking lane or parking garage it is heading to,
+    /// and counts those "reservations". When a parking lane or garage has as many cars heading to it as it has
+    /// free spots, it is shown as full to the route planner, so new routes go somewhere else. Cars that already reserved it are
     /// not touched: they keep driving there normally, and the game's own parking logic is unchanged.
     /// </summary>
     public partial class ParkingReservationSystem : GameSystemBase
