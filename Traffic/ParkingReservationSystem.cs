@@ -27,6 +27,9 @@ namespace FedewsTweaks.Traffic
     /// and counts those "reservations". When a parking lane or garage has as many cars heading to it as it has
     /// free spots, it is shown as full to the route planner, so new routes go somewhere else. Cars that already reserved it are
     /// not touched: they keep driving there normally, and the game's own parking logic is unchanged.
+    ///
+    /// The same scan also drives the strict-bus-lanes re-plan after a car pulls out (DepartureReplan.cs).
+    /// A car waiting for that new route is left out of the reservation count.
     /// </summary>
     public partial class ParkingReservationSystem : GameSystemBase
     {

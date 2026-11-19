@@ -7,9 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-11-19
+
 ### Fixed
-- **Strict bus lanes** no longer empties the streets of private cars. The penalty also applied while citizens were choosing how to travel, so any trip to a building on a street with bus lanes looked many minutes slower by car. Citizens switched to taxis (which may use bus lanes) and walking, and left their own cars at home. The penalty now applies only to vehicles already on the road.
-- **Strict bus lanes** works for private cars again. Each private car with people inside plans its route once more right after pulling out, this time with the penalty. That request can't switch to a taxi or transit, and the car keeps its reserved parking spot. Park-and-ride trips keep their original plan. The log shows how many cars re-planned, about once per in-game minute.
+- **Strict bus lanes** no longer empties the streets of private cars. The penalty also applied while citizens were choosing how to travel, so any trip to a building on a street with bus lanes looked many minutes slower by car. Citizens switched to taxis (which may use bus lanes) and walking, and left their own cars at home. People now choose how to travel exactly as in the base game.
+
+### Changed
+- **Strict bus lanes** reaches private cars a new way: each car with people inside plans its route once more right after pulling out, this time with the penalty. That route can't switch to a taxi or transit, and the car keeps its reserved parking spot. Park-and-ride trips keep their original plan.
+- The log now shows how many cars planned their route again after pulling out, about once per in-game minute.
 
 ## [1.1.0] - 2026-11-19
 
@@ -37,6 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Remove ALL moving traffic** button: emergency reset for every driving car, taxi and delivery truck.
 - Both traffic buttons keep parked cars, public transport and service vehicles, and send passengers straight to their destination.
 
-[Unreleased]: https://github.com/federicoroldos/fedews-tweaks-and-fixes/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/federicoroldos/fedews-tweaks-and-fixes/compare/v1.1.1...HEAD
+[1.1.1]: https://github.com/federicoroldos/fedews-tweaks-and-fixes/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/federicoroldos/fedews-tweaks-and-fixes/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/federicoroldos/fedews-tweaks-and-fixes/releases/tag/v1.0.0

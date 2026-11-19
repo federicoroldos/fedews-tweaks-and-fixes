@@ -26,7 +26,10 @@ Ten sliders: helicopters, space rocket, airplanes, road traffic, sirens & horns,
 In the base game, when a spot frees up, every nearby car heads for it, and the losers U-turn and re-route over and over. With this on, a spot that a car is already heading to counts as **taken** for every other route, whether it's on the street, in a parking lot or in a parking garage. Cars are never removed or teleported.
 
 ### 🚌 Strict bus lanes
-In the base game, bus lanes only carry a small penalty, so cars dive in to skip queues. This multiplies that penalty (**25×** by default, 5–100×) for every vehicle on the road that isn't allowed in bus lanes. Private cars plan their route once more right after pulling out, so the penalty only changes their route and never whether people drive. It's not a hard ban, because some turns and driveways can only be reached through a bus lane. Buses, taxis and emergency vehicles are unaffected, and so is people's choice between driving, a taxi, transit and walking.
+In the base game, bus lanes only carry a small penalty, so cars dive in to skip queues. This multiplies that penalty (**25×** by default, 5–100×) for cars and trucks that aren't allowed in bus lanes. It's not a hard ban, because some turns and driveways can only be reached through a bus lane. Buses, taxis and emergency vehicles are unaffected.
+
+- It changes **which roads** drivers take, never **whether** people drive. People still choose between their car, a taxi, transit and walking exactly as in the base game.
+- Private cars plan their route once more right after pulling out, this time with the penalty. They keep their reserved parking spot, and park-and-ride trips keep their original plan.
 
 ### ⚱️ Crematoriums empty cemeteries
 In the base game, a full cemetery stays full forever: nothing takes the bodies out, and there's no "Empty" button like landfills have. With this on, a crematorium that has finished the bodies from the city takes the next ones from the fullest cemetery and cremates them at its normal speed. City bodies always come first, and crematoriums keep room for incoming hearses. No hearses drive between the two; the bodies move straight over.
