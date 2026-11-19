@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-11-19
+
 ### Added
 - **Crematoriums empty cemeteries:** a crematorium with no bodies waiting from the city cremates bodies from the fullest cemetery instead of sitting idle, so cemeteries finally empty. Bodies from the city always come first. On by default, under the new **City services** tab.
 - **Landfills stop emptying when empty:** a landfill's "Empty" button switches itself off once the landfill is empty, so it goes back to collecting garbage instead of staying out of service forever.
@@ -31,5 +33,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Remove ALL moving traffic** button: emergency reset for every driving car, taxi and delivery truck.
 - Both traffic buttons keep parked cars, public transport and service vehicles, and send passengers straight to their destination.
 
-[Unreleased]: https://github.com/federicoroldos/fedews-tweaks-and-fixes/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/federicoroldos/fedews-tweaks-and-fixes/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/federicoroldos/fedews-tweaks-and-fixes/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/federicoroldos/fedews-tweaks-and-fixes/releases/tag/v1.0.0
