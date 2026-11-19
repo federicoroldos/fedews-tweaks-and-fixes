@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Crematoriums empty cemeteries:** a crematorium with no bodies waiting from the city cremates bodies from the fullest cemetery instead of sitting idle, so cemeteries finally empty. Bodies from the city always come first. On by default, under the new **City services** tab.
+- **Landfills stop emptying when empty:** a landfill's "Empty" button switches itself off once the landfill is empty, so it goes back to collecting garbage instead of staying out of service forever.
+- **Faster service calls:** a building waiting for a garbage truck, hearse, ambulance, fire truck or police never waits more than about 20 in-game minutes before calling again. In the base game this wait doubles after every miss, up to about 6 in-game hours, and never goes back down.
 - **Parking spot reservations** now cover parking garages and parking buildings too. Once enough cars are on their way to fill a garage, new routes pick somewhere else, while the cars already heading there still drive in.
 
 ### Changed

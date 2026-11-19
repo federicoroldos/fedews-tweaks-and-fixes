@@ -8,7 +8,7 @@
 [![Platform](https://img.shields.io/badge/platform-Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white)](#installation)
 [![License: MIT](https://img.shields.io/badge/license-MIT-ff8a4c?style=for-the-badge)](LICENSE)
 
-Per-sound volume control and traffic fixes. Every feature is optional, under **Options → Fedews' Tweaks and Fixes**.
+Per-sound volume control, traffic fixes and city service fixes. Every feature is optional, under **Options → Fedews' Tweaks and Fixes**.
 
 </div>
 
@@ -28,6 +28,15 @@ In the base game, when a spot frees up, every nearby car heads for it, and the l
 ### 🚌 Strict bus lanes
 In the base game, bus lanes only carry a small penalty, so cars dive in to skip queues. This multiplies that penalty (**25×** by default, 5–100×) for every vehicle not allowed in bus lanes. It's not a hard ban, because some turns and driveways can only be reached through a bus lane. Buses, taxis and emergency vehicles are unaffected.
 
+### ⚱️ Crematoriums empty cemeteries
+In the base game, a full cemetery stays full forever: nothing takes the bodies out, and there's no "Empty" button like landfills have. With this on, a crematorium that has finished the bodies from the city takes the next ones from the fullest cemetery and cremates them at its normal speed. City bodies always come first, and crematoriums keep room for incoming hearses. No hearses drive between the two; the bodies move straight over.
+
+### 🗑️ Landfills stop emptying when empty
+In the base game, a landfill set to "Empty" stays out of service forever, even after it's empty: its trucks stay parked and it takes no garbage. Now the button switches itself off once the landfill is empty.
+
+### 🚑 Faster service calls
+In the base game, every time a building calls for a garbage truck, hearse, ambulance, fire truck or police and none is free, it waits twice as long before calling again, up to about 6 in-game hours. So after one busy moment, garbage and bodies pile up and fires burn for hours while vehicles sit idle. Now the wait is capped at about 20 in-game minutes. Patrols, mail and road maintenance are unchanged.
+
 ### 🚨 Jam rescue
 
 | Button | What it does |
@@ -46,7 +55,7 @@ In the base game, bus lanes only carry a small penalty, so cars dive in to skip 
 2. Extract it into `%USERPROFILE%\AppData\LocalLow\Colossal Order\Cities Skylines II\Mods\FedewsTweaks\`.
 3. Start the game and open **Options → Fedews' Tweaks and Fixes**.
 
-The mod stores nothing in your saves, so you can add or remove it at any time.
+The mod adds nothing new to your saves, so you can add or remove it at any time.
 
 <details>
 <summary><b>Build from source</b></summary>

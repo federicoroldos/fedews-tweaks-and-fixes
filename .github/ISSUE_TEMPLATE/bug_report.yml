@@ -17,6 +17,9 @@ body:
         - Strict bus lanes
         - Remove stuck traffic
         - Remove ALL moving traffic
+        - Crematoriums empty cemeteries
+        - Landfills stop emptying when empty
+        - Faster service calls
         - Options page / something else
     validations:
       required: true

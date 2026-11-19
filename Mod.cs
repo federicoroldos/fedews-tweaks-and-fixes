@@ -7,6 +7,7 @@ using Game.SceneFlow;
 using Game.Simulation;
 using HarmonyLib;
 using FedewsTweaks.Audio;
+using FedewsTweaks.Services;
 using FedewsTweaks.Traffic;
 
 namespace FedewsTweaks
@@ -45,6 +46,15 @@ namespace FedewsTweaks
 
             // Traffic emergency buttons (main loop, so they also react while the game is paused)
             updateSystem.UpdateAt<ClearTrafficSystem>(SystemUpdatePhase.MainLoop);
+
+            // Crematoriums take bodies out of full cemeteries (right after the game's own deathcare update)
+            updateSystem.UpdateAfter<CemeteryEmptyingSystem, DeathcareFacilityAISystem>(SystemUpdatePhase.GameSimulation);
+
+            // Landfills switch "Empty" off by themselves once they are empty
+            updateSystem.UpdateAfter<LandfillRefillSystem, GarbageFacilityAISystem>(SystemUpdatePhase.GameSimulation);
+
+            // Buildings waiting for garbage trucks, hearses, ambulances, fire trucks or police never wait hours before calling again
+            updateSystem.UpdateBefore<ServiceRetrySystem, GarbageCollectorDispatchSystem>(SystemUpdatePhase.GameSimulation);
 
             // Bus lanes: adjust each car's route request before the route planner sees it
             m_Harmony = new Harmony(Id);

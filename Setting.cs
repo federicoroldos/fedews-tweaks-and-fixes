@@ -10,8 +10,8 @@ using Game.UI;
 namespace FedewsTweaks
 {
     [FileLocation(Mod.Id)]
-    [SettingsUIGroupOrder(kSoundGroup, kSoundToolsGroup, kTrafficGroup, kTrafficToolsGroup)]
-    [SettingsUIShowGroupName(kSoundGroup, kSoundToolsGroup, kTrafficGroup, kTrafficToolsGroup)]
+    [SettingsUIGroupOrder(kSoundGroup, kSoundToolsGroup, kTrafficGroup, kTrafficToolsGroup, kServicesGroup)]
+    [SettingsUIShowGroupName(kSoundGroup, kSoundToolsGroup, kTrafficGroup, kTrafficToolsGroup, kServicesGroup)]
     public class Setting : ModSetting
     {
         public const string kSoundSection = "Sounds";
@@ -20,6 +20,8 @@ namespace FedewsTweaks
         public const string kSoundToolsGroup = "SoundTools";
         public const string kTrafficGroup = "TrafficFixes";
         public const string kTrafficToolsGroup = "TrafficTools";
+        public const string kServicesSection = "Services";
+        public const string kServicesGroup = "ServiceFixes";
 
         /// <summary>Raised whenever any option changes.</summary>
         public static event Action Changed;
@@ -114,6 +116,16 @@ namespace FedewsTweaks
 
         public int TrafficToolStatusVersion() => Traffic.ClearTrafficSystem.StatusVersion;
 
+        // ---------- City services ----------
+        [SettingsUISection(kServicesSection, kServicesGroup)]
+        public bool CremateCemeteryBodies { get; set; }
+
+        [SettingsUISection(kServicesSection, kServicesGroup)]
+        public bool AutoStopLandfillEmptying { get; set; }
+
+        [SettingsUISection(kServicesSection, kServicesGroup)]
+        public bool FasterServiceRetries { get; set; }
+
         public override void SetDefaults()
         {
             HelicopterVolume = 100;
@@ -130,6 +142,9 @@ namespace FedewsTweaks
             StrictBusLanes = true;
             BusLaneStrictness = 25;
             StuckSeconds = 40;
+            CremateCemeteryBodies = true;
+            AutoStopLandfillEmptying = true;
+            FasterServiceRetries = true;
         }
 
         public override void Apply()
@@ -151,6 +166,8 @@ namespace FedewsTweaks
                 { m.GetSettingsLocaleID(), Mod.DisplayName },
                 { m.GetOptionTabLocaleID(Setting.kSoundSection), "Sounds" },
                 { m.GetOptionTabLocaleID(Setting.kTrafficSection), "Traffic" },
+                { m.GetOptionTabLocaleID(Setting.kServicesSection), "City services" },
+                { m.GetOptionGroupLocaleID(Setting.kServicesGroup), "City service fixes" },
                 { m.GetOptionGroupLocaleID(Setting.kSoundGroup), "Volume per sound type" },
                 { m.GetOptionGroupLocaleID(Setting.kSoundToolsGroup), "Tools" },
                 { m.GetOptionGroupLocaleID(Setting.kTrafficGroup), "Traffic fixes" },
@@ -195,6 +212,13 @@ namespace FedewsTweaks
                 { m.GetOptionWarningLocaleID(nameof(Setting.RemoveAllTraffic)), "Remove every car, taxi and delivery truck that is currently driving, even ones that are not stuck? Parked cars are NOT removed. Buses and emergency vehicles stay too." },
                 { m.GetOptionLabelLocaleID(nameof(Setting.TrafficToolStatus)), "Status" },
                 { m.GetOptionDescLocaleID(nameof(Setting.TrafficToolStatus)), "What the traffic tools are doing right now, or the result of the last run." },
+
+                { m.GetOptionLabelLocaleID(nameof(Setting.CremateCemeteryBodies)), "Crematoriums empty cemeteries" },
+                { m.GetOptionDescLocaleID(nameof(Setting.CremateCemeteryBodies)), "In the base game, bodies buried in a cemetery stay there forever and nothing empties it, while crematoriums sit idle. With this on, any crematorium that has finished the bodies from the city takes the next ones from the fullest cemetery and cremates them at its normal speed. Bodies from the city always come first, and crematoriums keep room for incoming hearses. No hearses drive between the buildings: the bodies are moved straight over, so you see the cemetery's count go down and the crematorium's go up." },
+                { m.GetOptionLabelLocaleID(nameof(Setting.AutoStopLandfillEmptying)), "Landfills stop emptying when empty" },
+                { m.GetOptionDescLocaleID(nameof(Setting.AutoStopLandfillEmptying)), "In the base game, a landfill set to \"Empty\" stays that way forever: once it has been emptied its garbage trucks keep sitting in the depot and it takes no garbage from the city until you remember to switch it back. With this on, the \"Empty\" button switches itself off once the landfill is empty, and the landfill goes back to collecting garbage." },
+                { m.GetOptionLabelLocaleID(nameof(Setting.FasterServiceRetries)), "Faster service calls" },
+                { m.GetOptionDescLocaleID(nameof(Setting.FasterServiceRetries)), "For garbage trucks, hearses, ambulances, fire trucks and police emergencies. In the base game, every time a building calls for one of these and none is free, it waits twice as long before calling again, up to about 6 in-game hours, and that wait never goes back down. So after one busy moment, garbage and dead bodies can pile up and fires can burn for hours while vehicles sit idle at the station. With this on, a building never waits more than about 20 in-game minutes before calling again. Police patrols, mail and road maintenance are not changed." },
             };
         }
 
