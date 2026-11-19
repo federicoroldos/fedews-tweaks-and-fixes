@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.2] - 2026-11-19
+
 ### Fixed
 - **Strict bus lanes** no longer makes cars and taxis vanish. When a car or taxi with people inside planned its route again (for example because its parking spot was taken on arrival), the multiplied penalty could push the route over the game's cost limit. The game then dropped the passengers where they were and moved the car away: home, or back to the map edge for visitors. Those re-plans now work like the base game.
 - **Strict bus lanes** no longer makes cars U-turn mid-street. Every private car planned its route again right after pulling out and kept driving while the new route was worked out. When the route planner was busy, the new route arrived several blocks later and the car turned around to get back to where it had asked, even where U-turns are banned. Now a car is only asked while it is still in its parking spot, garage or driveway, and it waits there for the new route. Cars already on the road are never asked, and only cars whose route goes through a bus lane re-plan at all.
@@ -49,7 +51,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Remove ALL moving traffic** button: emergency reset for every driving car, taxi and delivery truck.
 - Both traffic buttons keep parked cars, public transport and service vehicles, and send passengers straight to their destination.
 
-[Unreleased]: https://github.com/federicoroldos/fedews-tweaks-and-fixes/compare/v1.1.1...HEAD
+[Unreleased]: https://github.com/federicoroldos/fedews-tweaks-and-fixes/compare/v1.1.2...HEAD
+[1.1.2]: https://github.com/federicoroldos/fedews-tweaks-and-fixes/compare/v1.1.1...v1.1.2
 [1.1.1]: https://github.com/federicoroldos/fedews-tweaks-and-fixes/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/federicoroldos/fedews-tweaks-and-fixes/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/federicoroldos/fedews-tweaks-and-fixes/releases/tag/v1.0.0
