@@ -93,11 +93,13 @@ namespace FedewsTweaks.Traffic
             m_ToBlock = new NativeList<Entity>(Allocator.Persistent);
             m_ToBlockFree = new NativeList<float>(Allocator.Persistent);
             m_ToUnblock = new NativeList<Entity>(Allocator.Persistent);
+            CreateDepartures();
         }
 
         protected override void OnDestroy()
         {
             m_Handle.Complete();
+            DisposeDepartures();
             m_Reservations.Dispose();
             m_Counts.Dispose();
             m_BlockedNative.Dispose();
@@ -114,6 +116,7 @@ namespace FedewsTweaks.Traffic
             m_Scheduled = false;
             m_Blocked.Clear();
             m_LastLoggedBlocked = -1;
+            ResetDepartures();
 
             if (!mode.IsGame()) return;
 
@@ -142,8 +145,12 @@ namespace FedewsTweaks.Traffic
                 m_Handle.Complete();
                 m_Scheduled = false;
                 ApplyResults();
+                ApplyDepartures();
                 ReportCost();
             }
+            m_ToBlock.Clear();
+            m_ToBlockFree.Clear();
+            m_ToUnblock.Clear();
 
             bool enabled = Mod.Settings != null && Mod.Settings.SmartParking;
             if (enabled != m_WasEnabled)
@@ -151,23 +158,40 @@ namespace FedewsTweaks.Traffic
                 m_WasEnabled = enabled;
                 Mod.log.Info(enabled ? "Parking reservations: ON" : "Parking reservations: OFF (original game behaviour)");
             }
-            if (!enabled)
+            if (!enabled && m_Blocked.Count > 0) UnblockAll();
+
+            // Strict bus lanes: private cars plan their route once more after pulling out (DepartureReplan.cs)
+            bool depart = Mod.Settings != null && Mod.Settings.StrictBusLanes;
+            if (depart != m_DepartWasEnabled)
             {
-                if (m_Blocked.Count > 0) UnblockAll();
-                return;
+                m_DepartWasEnabled = depart;
+                ResetDepartures();
             }
 
+            if (!enabled && !depart) return;
+
+            JobHandle handle = Dependency;
+            if (depart) handle = ScheduleDepartures(handle);
+
+            if (enabled) handle = ScheduleReservations(handle);
+
+            m_Handle = handle;
+            m_Scheduled = true;
+            Dependency = m_Handle;
+        }
+
+        private JobHandle ScheduleReservations(JobHandle dependency)
+        {
             // Hand the current state to the jobs
             m_BlockedNative.Clear();
             if (m_BlockedNative.Capacity < m_Blocked.Count * 2) m_BlockedNative.Capacity = m_Blocked.Count * 2;
             foreach (var kv in m_Blocked) m_BlockedNative.TryAdd(kv.Key, kv.Value);
             m_Reservations.Clear();
-            m_ToBlock.Clear();
-            m_ToBlockFree.Clear();
-            m_ToUnblock.Clear();
 
             var scan = new FindReservationsJob
             {
+                m_EntityType = GetEntityTypeHandle(),
+                m_Departures = m_Departures,
                 m_CurrentLaneType = GetComponentTypeHandle<CarCurrentLane>(true),
                 m_PathOwnerType = GetComponentTypeHandle<PathOwner>(true),
                 m_NavigationLaneType = GetBufferTypeHandle<CarNavigationLane>(true),
@@ -177,7 +201,7 @@ namespace FedewsTweaks.Traffic
                 m_ConnectionLaneData = GetComponentLookup<Game.Net.ConnectionLane>(true),
                 m_Output = m_Reservations.AsParallelWriter(),
             };
-            JobHandle scanHandle = JobChunkExtensions.ScheduleParallel(scan, m_CarQuery, Dependency);
+            JobHandle scanHandle = JobChunkExtensions.ScheduleParallel(scan, m_CarQuery, dependency);
 
             var evaluate = new EvaluateJob
             {
@@ -198,9 +222,7 @@ namespace FedewsTweaks.Traffic
                 m_ToBlockFree = m_ToBlockFree,
                 m_ToUnblock = m_ToUnblock,
             };
-            m_Handle = evaluate.Schedule(scanHandle);
-            m_Scheduled = true;
-            Dependency = m_Handle;
+            return evaluate.Schedule(scanHandle);
         }
 
         private void ApplyResults()
@@ -235,9 +257,15 @@ namespace FedewsTweaks.Traffic
         private void ReportCost()
         {
             if (++m_Checks < kChecksPerReport) return;
-            double ms = s_CpuTicks * 1000.0 / System.Diagnostics.Stopwatch.Frequency / m_Checks;
-            long cars = s_CarsScanned / m_Checks;
-            Mod.log.Info($"Parking reservations cost: {ms:0.00} ms of CPU per check (spread over worker threads), {cars} moving cars checked each time, one check every {kInterval} frames");
+            if (m_WasEnabled)
+            {
+                double ms = s_CpuTicks * 1000.0 / System.Diagnostics.Stopwatch.Frequency / m_Checks;
+                long cars = s_CarsScanned / m_Checks;
+                Mod.log.Info($"Parking reservations cost: {ms:0.00} ms of CPU per check (spread over worker threads), {cars} moving cars checked each time, one check every {kInterval} frames");
+            }
+            if (m_DepartWasEnabled)
+                Mod.log.Info($"Strict bus lanes: {m_ReplansSinceReport} cars planned their route again after pulling out, since the last report");
+            m_ReplansSinceReport = 0;
             m_Checks = 0;
             s_CpuTicks = 0;
             s_CarsScanned = 0;
@@ -259,6 +287,8 @@ namespace FedewsTweaks.Traffic
         /// <summary>For every moving car: which parking lane is it on its way to (if any)?</summary>
         private struct FindReservationsJob : IJobChunk
         {
+            [ReadOnly] public EntityTypeHandle m_EntityType;
+            [ReadOnly] public NativeParallelHashMap<Entity, byte> m_Departures;
             [ReadOnly] public ComponentTypeHandle<CarCurrentLane> m_CurrentLaneType;
             [ReadOnly] public ComponentTypeHandle<PathOwner> m_PathOwnerType;
             [ReadOnly] public BufferTypeHandle<CarNavigationLane> m_NavigationLaneType;
@@ -271,6 +301,7 @@ namespace FedewsTweaks.Traffic
             public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
             {
                 long startTicks = System.Diagnostics.Stopwatch.GetTimestamp();
+                NativeArray<Entity> entities = chunk.GetNativeArray(m_EntityType);
                 NativeArray<CarCurrentLane> currentLanes = chunk.GetNativeArray(ref m_CurrentLaneType);
                 NativeArray<PathOwner> pathOwners = chunk.GetNativeArray(ref m_PathOwnerType);
                 BufferAccessor<CarNavigationLane> navigationLanes = chunk.GetBufferAccessor(ref m_NavigationLaneType);
@@ -278,6 +309,10 @@ namespace FedewsTweaks.Traffic
 
                 for (int i = 0; i < chunk.Count; i++)
                 {
+                    // About to plan its route again after pulling out (strict bus lanes): don't let its old
+                    // spot look taken by itself, so the new route can pick the same spot.
+                    if (m_Departures.TryGetValue(entities[i], out byte departure) && departure != kDone) continue;
+
                     DynamicBuffer<CarNavigationLane> nav = navigationLanes[i];
 
                     // Already on the parking lane and nothing after it: this car is parking there right now.

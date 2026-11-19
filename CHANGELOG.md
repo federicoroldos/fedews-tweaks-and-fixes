@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Strict bus lanes** no longer empties the streets of private cars. The penalty also applied while citizens were choosing how to travel, so any trip to a building on a street with bus lanes looked many minutes slower by car. Citizens switched to taxis (which may use bus lanes) and walking, and left their own cars at home. The penalty now applies only to vehicles already on the road.
+- **Strict bus lanes** works for private cars again. Each private car with people inside plans its route once more right after pulling out, this time with the penalty. That request can't switch to a taxi or transit, and the car keeps its reserved parking spot. Park-and-ride trips keep their original plan. The log shows how many cars re-planned, about once per in-game minute.
+
 ## [1.1.0] - 2026-11-19
 
 ### Added
