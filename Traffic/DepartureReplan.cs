@@ -11,13 +11,16 @@ using Unity.Mathematics;
 namespace FedewsTweaks.Traffic
 {
     /// <summary>
-    /// Strict bus lanes for private cars: one extra route plan right after a car pulls out.
+    /// Strict bus lanes for private cars: one extra route plan before a car leaves its parking spot.
     ///
     /// A citizen chooses between their car, a taxi, transit and walking in the same route request that
     /// picks the car's route, so the strict bus-lane penalty can't go into that request without scaring
     /// people out of their cars (see <see cref="BusLanePatch"/>). The car then drives that route, and thanks
-    /// to the parking reservations it rarely has a reason to plan again. So once the car is on the road
-    /// with people in it, it is asked to plan its route once more. That request is made by the car, so it
+    /// to the parking reservations it rarely has a reason to plan again. So once people are in the car,
+    /// and only if its route goes through a bus lane, it is asked to plan its route once more while it is
+    /// still in its spot, garage or driveway. It waits there for the new route. (A car asked while already
+    /// driving keeps going until the route arrives and then U-turns back, so a car that has reached the
+    /// road is never asked.) That request is made by the car, so it
     /// gets the strict penalty, and taxi and transit are taken out of it: the people already chose to
     /// drive, so the only choices left are which roads to take, where to park and the walk from there.
     ///
@@ -30,7 +33,7 @@ namespace FedewsTweaks.Traffic
     public partial class ParkingReservationSystem
     {
         // Per-car progress. A car is only in the map while it is on the road; it is removed when it parks.
-        internal const byte kSeen = 1;       // has pulled out; waiting for the main thread to arm it
+        internal const byte kSeen = 1;       // people inside, still in its spot; waiting for the main thread to arm it
         internal const byte kArmed = 2;      // its next route request gets the departure treatment
         internal const byte kRequested = 3;  // asked to plan again; waiting for the new route
         internal const byte kDone = 4;       // route is final for this trip
@@ -49,13 +52,15 @@ namespace FedewsTweaks.Traffic
         private bool m_SeedDepartures = true;
         private bool m_DepartWasEnabled;
         private long m_ReplansSinceReport;
+        private long m_DeparturesSinceReport;
+        private long m_MissedSinceReport;
 
         private void CreateDepartures()
         {
             m_Departures = new NativeParallelHashMap<Entity, byte>(1024, Allocator.Persistent);
             m_NewDepartures = new NativeList<Entity>(Allocator.Persistent);
             m_GoneDepartures = new NativeList<Entity>(Allocator.Persistent);
-            m_ReplanCounter = new NativeArray<int>(1, Allocator.Persistent);
+            m_ReplanCounter = new NativeArray<int>(3, Allocator.Persistent);   // [0] re-planned, [1] checked in their spot, [2] already on the road when first seen
         }
 
         private void DisposeDepartures()
@@ -109,7 +114,11 @@ namespace FedewsTweaks.Traffic
             }
 
             m_ReplansSinceReport += m_ReplanCounter[0];
+            m_DeparturesSinceReport += m_ReplanCounter[1];
             m_ReplanCounter[0] = 0;
+            m_ReplanCounter[1] = 0;
+            m_MissedSinceReport += m_ReplanCounter[2];
+            m_ReplanCounter[2] = 0;
         }
 
         private JobHandle ScheduleDepartures(JobHandle dependency)
@@ -125,6 +134,7 @@ namespace FedewsTweaks.Traffic
                 m_BicycleType = GetComponentTypeHandle<Bicycle>(true),
                 m_PathOwnerType = GetComponentTypeHandle<PathOwner>(false),
                 m_PathElementType = GetBufferTypeHandle<PathElement>(true),
+                m_NavigationLaneType = GetBufferTypeHandle<CarNavigationLane>(true),
                 m_CarLaneData = GetComponentLookup<Game.Net.CarLane>(true),
                 m_WaypointData = GetComponentLookup<Game.Routes.Waypoint>(true),
                 m_TaxiStandData = GetComponentLookup<Game.Routes.TaxiStand>(true),
@@ -157,6 +167,7 @@ namespace FedewsTweaks.Traffic
             [ReadOnly] public ComponentTypeHandle<Bicycle> m_BicycleType;
             public ComponentTypeHandle<PathOwner> m_PathOwnerType;
             [ReadOnly] public BufferTypeHandle<PathElement> m_PathElementType;
+            [ReadOnly] public BufferTypeHandle<CarNavigationLane> m_NavigationLaneType;
             [ReadOnly] public ComponentLookup<Game.Net.CarLane> m_CarLaneData;
             [ReadOnly] public ComponentLookup<Game.Routes.Waypoint> m_WaypointData;
             [ReadOnly] public ComponentLookup<Game.Routes.TaxiStand> m_TaxiStandData;
@@ -177,6 +188,26 @@ namespace FedewsTweaks.Traffic
                 return false;
             }
 
+            /// <summary>Is any lane still ahead (the next few in the navigation buffer, then the rest of the route) a bus lane?</summary>
+            private bool UsesBusLane(DynamicBuffer<CarNavigationLane> nav, DynamicBuffer<PathElement> path, int from)
+            {
+                for (int k = 0; k < nav.Length; k++)
+                {
+                    if (IsBusLane(nav[k].m_Lane)) return true;
+                }
+                for (int k = math.max(0, from); k < path.Length; k++)
+                {
+                    if (IsBusLane(path[k].m_Target)) return true;
+                }
+                return false;
+            }
+
+            private bool IsBusLane(Entity lane)
+            {
+                return m_CarLaneData.TryGetComponent(lane, out Game.Net.CarLane carLane)
+                    && (carLane.m_Flags & Game.Net.CarLaneFlags.PublicOnly) != 0;
+            }
+
             public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
             {
                 NativeArray<Entity> entities = chunk.GetNativeArray(m_EntityType);
@@ -184,6 +215,7 @@ namespace FedewsTweaks.Traffic
                 NativeArray<Game.Vehicles.PersonalCar> cars = chunk.GetNativeArray(ref m_PersonalCarType);
                 NativeArray<PathOwner> owners = chunk.GetNativeArray(ref m_PathOwnerType);
                 BufferAccessor<PathElement> paths = chunk.GetBufferAccessor(ref m_PathElementType);
+                BufferAccessor<CarNavigationLane> navLanes = chunk.GetBufferAccessor(ref m_NavigationLaneType);
                 bool bicycles = chunk.Has(ref m_BicycleType);
 
                 for (int i = 0; i < chunk.Count; i++)
@@ -195,17 +227,27 @@ namespace FedewsTweaks.Traffic
                         // (bicycles don't use car lanes' rules): leave its route alone for this trip.
                         if (m_Seed || bicycles) { m_Departures.TryAdd(car, kDone); continue; }
 
-                        // Wait until people are inside and the car has left the parking spot for a real road lane.
+                        // Wait until people are inside and the car has its route.
                         PersonalCarFlags flags = cars[i].m_State;
                         if ((flags & PersonalCarFlags.Transporting) == 0) continue;
                         if ((flags & (PersonalCarFlags.Boarding | PersonalCarFlags.Disembarking)) != 0) continue;
-                        if (!m_CarLaneData.HasComponent(currentLanes[i].m_Lane)) continue;
                         if ((owners[i].m_State & PathFlags.Pending) != 0) continue;
+
+                        // Already out on a road lane: too late. A car that re-plans while driving keeps going
+                        // until the new route arrives (which can take seconds when the route planner is busy),
+                        // then U-turns back to where it asked. Only a car still in its spot, garage or
+                        // driveway re-plans: it waits there for the new route and drives off on it.
+                        if (m_CarLaneData.HasComponent(currentLanes[i].m_Lane)) { m_Departures.TryAdd(car, kDone); m_Counter[2]++; continue; }
 
                         // Park and ride: the rest of the trip (which the car carries, and hands to the people
                         // when they get out) continues by transit or taxi. A re-plan without transit would make
                         // them drive all the way, so keep the plan they made.
                         if (ContinuesByTransit(paths[i], owners[i].m_ElementIndex)) { m_Departures.TryAdd(car, kDone); continue; }
+
+                        // Only a car whose route actually goes through a bus lane plans again; every other car
+                        // keeps the route it has and leaves without waiting.
+                        m_Counter[1]++;
+                        if (!UsesBusLane(navLanes[i], paths[i], owners[i].m_ElementIndex)) { m_Departures.TryAdd(car, kDone); continue; }
 
                         m_Departures.TryAdd(car, kSeen);
                         m_New.Add(car);
@@ -218,6 +260,13 @@ namespace FedewsTweaks.Traffic
                         if ((owner.m_State & PathFlags.Divert) != 0)
                         {
                             // Heading somewhere special (e.g. an emergency): don't touch it
+                            m_Departures[car] = kDone;
+                            m_Gone.Add(car);
+                            continue;
+                        }
+                        // Pulled out onto the road while it was being armed: leave it alone (see above)
+                        if (m_CarLaneData.HasComponent(currentLanes[i].m_Lane))
+                        {
                             m_Departures[car] = kDone;
                             m_Gone.Add(car);
                             continue;

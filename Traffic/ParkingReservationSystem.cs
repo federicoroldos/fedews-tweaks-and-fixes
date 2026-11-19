@@ -163,7 +163,7 @@ namespace FedewsTweaks.Traffic
             }
             if (!enabled && m_Blocked.Count > 0) UnblockAll();
 
-            // Strict bus lanes: private cars plan their route once more after pulling out (DepartureReplan.cs)
+            // Strict bus lanes: private cars headed through a bus lane plan their route once more before leaving their spot (DepartureReplan.cs)
             bool depart = Mod.Settings != null && Mod.Settings.StrictBusLanes;
             if (depart != m_DepartWasEnabled)
             {
@@ -267,8 +267,10 @@ namespace FedewsTweaks.Traffic
                 Mod.log.Info($"Parking reservations cost: {ms:0.00} ms of CPU per check (spread over worker threads), {cars} moving cars checked each time, one check every {kInterval} frames");
             }
             if (m_DepartWasEnabled)
-                Mod.log.Info($"Strict bus lanes: {m_ReplansSinceReport} cars planned their route again after pulling out, since the last report");
+                Mod.log.Info($"Strict bus lanes: {m_ReplansSinceReport} of {m_DeparturesSinceReport} cars leaving a spot were headed through a bus lane and planned their route again before leaving ({m_MissedSinceReport} were already on the road when checked and kept their route), since the last report");
             m_ReplansSinceReport = 0;
+            m_DeparturesSinceReport = 0;
+            m_MissedSinceReport = 0;
             m_Checks = 0;
             s_CpuTicks = 0;
             s_CarsScanned = 0;
@@ -312,7 +314,7 @@ namespace FedewsTweaks.Traffic
 
                 for (int i = 0; i < chunk.Count; i++)
                 {
-                    // About to plan its route again after pulling out (strict bus lanes): don't let its old
+                    // About to plan its route again before leaving (strict bus lanes): don't let its old
                     // spot look taken by itself, so the new route can pick the same spot.
                     if (m_Departures.TryGetValue(entities[i], out byte departure) && departure != kDone) continue;
 

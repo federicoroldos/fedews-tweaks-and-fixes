@@ -43,7 +43,7 @@ namespace FedewsTweaks.Traffic
 
         private static void Prefix(PathfindAction action, Entity owner)
         {
-            // A private car planning its route again right after pulling out (see DepartureReplan.cs)
+            // A private car planning its route again before leaving its spot (see DepartureReplan.cs)
             bool departure = owner != Entity.Null && ParkingReservationSystem.s_Departing.Remove(owner);
 
             Setting s = Mod.Settings;
@@ -56,6 +56,13 @@ namespace FedewsTweaks.Traffic
             if ((p.m_IgnoredRules & RuleFlags.ForbidPrivateTraffic) != 0) return;     // allowed in bus lanes
             if (p.m_Weights.m_Value.y <= 0f) return;                                   // doesn't care about rules at all
             if (!IsVehicle(owner)) return;                                             // a trip being planned, not a car re-routing
+
+            // A cost-limited request from a vehicle is a citizen's trip being planned again from a car or taxi
+            // (e.g. the spot was taken on arrival). Its limit (17000) is easily passed once the penalty is
+            // multiplied, and a failed request makes the game drop the passengers on the spot and move the car
+            // away (home, or the map edge for visitors). Leave those like the base game; trucks and other
+            // vehicles have no limit, and the departure re-plan has its limit lifted below.
+            if (!departure && p.m_MaxCost > 0f) return;
 
             // The people in the car already chose to drive. Keep it that way: only roads, parking and the
             // walk from the spot are left to choose from, so the penalty can't push them into a taxi or a bus.

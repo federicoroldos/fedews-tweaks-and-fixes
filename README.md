@@ -29,7 +29,7 @@ In the base game, when a spot frees up, every nearby car heads for it, and the l
 In the base game, bus lanes only carry a small penalty, so cars dive in to skip queues. This multiplies that penalty (**25×** by default, 5–100×) for cars and trucks that aren't allowed in bus lanes. It's not a hard ban, because some turns and driveways can only be reached through a bus lane. Buses, taxis and emergency vehicles are unaffected.
 
 - It changes **which roads** drivers take, never **whether** people drive. People still choose between their car, a taxi, transit and walking exactly as in the base game.
-- Private cars plan their route once more right after pulling out, this time with the penalty. They keep their reserved parking spot, and park-and-ride trips keep their original plan.
+- A private car whose route goes through a bus lane plans it once more before it leaves its parking spot, this time with the penalty, and waits there for the new route. Park-and-ride trips keep their original plan. Cars that are already driving are never sent a new route, so they don't turn around mid-street.
 
 ### ⚱️ Crematoriums empty cemeteries
 In the base game, a full cemetery stays full forever: nothing takes the bodies out, and there's no "Empty" button like landfills have. With this on, a crematorium that has finished the bodies from the city takes the next ones from the fullest cemetery and cremates them at its normal speed. City bodies always come first, and crematoriums keep room for incoming hearses. No hearses drive between the two; the bodies move straight over.

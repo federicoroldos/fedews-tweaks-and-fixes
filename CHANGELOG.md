@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Strict bus lanes** no longer makes cars and taxis vanish. When a car or taxi with people inside planned its route again (for example because its parking spot was taken on arrival), the multiplied penalty could push the route over the game's cost limit. The game then dropped the passengers where they were and moved the car away: home, or back to the map edge for visitors. Those re-plans now work like the base game.
+- **Strict bus lanes** no longer makes cars U-turn mid-street. Every private car planned its route again right after pulling out and kept driving while the new route was worked out. When the route planner was busy, the new route arrived several blocks later and the car turned around to get back to where it had asked, even where U-turns are banned. Now a car is only asked while it is still in its parking spot, garage or driveway, and it waits there for the new route. Cars already on the road are never asked, and only cars whose route goes through a bus lane re-plan at all.
+
+### Changed
+- The log now shows how many cars leaving a spot were headed through a bus lane and planned their route again, and how many were already on the road and kept theirs.
+
 ## [1.1.1] - 2026-11-19
 
 ### Fixed
